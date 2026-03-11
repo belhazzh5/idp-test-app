@@ -60,36 +60,39 @@ spec:
         repoVisibility: public
         gitCommitMessage: "chore: initial scaffold via IDP"
 
-    - id: create-argocd-manifest
-      name: Register ArgoCD Application
-      action: github:repo:push
+    - id: fetch-argocd
+      name: Prepare ArgoCD Manifest
+      action: fetch:plain:file
       input:
-        repoUrl: github.com?owner=belhazzh5&repo=idp-test-app
-        branch: main
-        commitMessage: "feat: ArgoCD app for ${{ parameters.appName }}"
-        files:
-          - path: argocd-apps/${{ parameters.appName }}.yaml
-            content: |
-              apiVersion: argoproj.io/v1alpha1
-              kind: Application
-              metadata:
-                name: ${{ parameters.appName }}
-                namespace: argocd
-              spec:
-                project: default
-                source:
-                  repoURL: https://github.com/belhazzh5/${{ parameters.appName }}
-                  targetRevision: main
-                  path: k8s
-                destination:
-                  server: https://kubernetes.default.svc
-                  namespace: ${{ parameters.appName }}
-                syncPolicy:
-                  automated:
-                    prune: true
-                    selfHeal: true
-                  syncOptions:
-                    - CreateNamespace=true
+        url: https://raw.githubusercontent.com/belhazzh5/idp-test-app/main/argocd-apps/.gitkeep
+        targetPath: argocd-app.yaml
+
+    - id: write-argocd
+      name: Write ArgoCD App Manifest
+      action: catalog:write
+      input:
+        filePath: argocd-apps/${{ parameters.appName }}.yaml
+        entity:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ${{ parameters.appName }}
+            namespace: argocd
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/belhazzh5/${{ parameters.appName }}
+              targetRevision: main
+              path: k8s
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: ${{ parameters.appName }}
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
 
     - id: register-catalog
       name: Register in Backstage Catalog
@@ -103,9 +106,6 @@ spec:
       - title: GitHub Repository
         url: ${{ steps['create-repo'].output.remoteUrl }}
         icon: github
-      - title: ArgoCD Application
-        url: http://localhost:30081/applications/${{ parameters.appName }}
-        icon: dashboard
       - title: Open in Catalog
         url: /catalog/default/component/${{ parameters.appName }}
         icon: catalog
