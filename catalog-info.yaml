@@ -1,0 +1,21 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: idp-test-app
+  description: Test application deployed via IDP GitOps flow
+  annotations:
+    github.com/project-slug: belhazzh5/idp-test-app
+    argocd/app-name: idp-test-app
+  tags:
+    - nginx
+    - demo
+    - gitops
+  links:
+    - url: http://argocd.idp.local:8080
+      title: ArgoCD App
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: production
+  owner: user:default/belhazzh5
+  system: idp-platform
