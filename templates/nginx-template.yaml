@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: nginx-app-template
   title: Deploy Nginx Application
-  description: Creates a new nginx app repo on GitHub and deploys it via ArgoCD
+  description: Creates a GitHub repo, deploys via ArgoCD, registers in catalog
   tags:
     - nginx
     - kubernetes
@@ -21,7 +21,7 @@ spec:
         appName:
           title: Application Name
           type: string
-          description: Name of your application (lowercase, no spaces)
+          description: Lowercase name, no spaces (e.g. my-app)
           pattern: '^[a-z0-9-]+$'
           ui:autofocus: true
         description:
@@ -40,8 +40,9 @@ spec:
           default: user:default/belhazzh5
 
   steps:
+    # Step 1: Render template files
     - id: fetch-template
-      name: Fetch Template Files
+      name: Render App Files
       action: fetch:template
       input:
         url: ./skeleton
@@ -51,6 +52,7 @@ spec:
           replicas: ${{ parameters.replicas }}
           owner: ${{ parameters.owner }}
 
+    # Step 2: Create GitHub repo + push rendered files
     - id: create-repo
       name: Create GitHub Repository
       action: publish:github
@@ -61,6 +63,39 @@ spec:
         repoVisibility: public
         gitCommitMessage: "chore: initial scaffold via IDP"
 
+    # Step 3: Create ArgoCD Application manifest in idp-test-app repo
+    - id: create-argocd-manifest
+      name: Register ArgoCD Application
+      action: github:repo:push
+      input:
+        repoUrl: github.com?owner=belhazzh5&repo=idp-test-app
+        branch: main
+        commitMessage: "feat: add ArgoCD app for ${{ parameters.appName }}"
+        files:
+          - path: argocd-apps/${{ parameters.appName }}.yaml
+            content: |
+              apiVersion: argoproj.io/v1alpha1
+              kind: Application
+              metadata:
+                name: ${{ parameters.appName }}
+                namespace: argocd
+              spec:
+                project: default
+                source:
+                  repoURL: https://github.com/belhazzh5/${{ parameters.appName }}
+                  targetRevision: main
+                  path: k8s
+                destination:
+                  server: https://kubernetes.default.svc
+                  namespace: ${{ parameters.appName }}
+                syncPolicy:
+                  automated:
+                    prune: true
+                    selfHeal: true
+                  syncOptions:
+                    - CreateNamespace=true
+
+    # Step 4: Register in Backstage catalog
     - id: register-catalog
       name: Register in Backstage Catalog
       action: catalog:register
@@ -73,6 +108,9 @@ spec:
       - title: GitHub Repository
         url: ${{ steps['create-repo'].output.remoteUrl }}
         icon: github
+      - title: ArgoCD Application
+        url: http://localhost:30081/applications/${{ parameters.appName }}
+        icon: dashboard
       - title: Open in Catalog
         url: /catalog/default/component/${{ parameters.appName }}
         icon: catalog
