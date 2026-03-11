@@ -1,0 +1,16 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ${{ values.appName }}
+  description: ${{ values.description }}
+  annotations:
+    github.com/project-slug: belhazzh5/${{ values.appName }}
+    argocd/app-name: ${{ values.appName }}
+  tags:
+    - nginx
+    - gitops
+spec:
+  type: service
+  lifecycle: production
+  owner: ${{ values.owner }}
+  system: idp-platform
