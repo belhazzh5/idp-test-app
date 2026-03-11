@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: idp-platform
+  description: Internal Developer Platform
+spec:
+  owner: user:default/belhazzh5
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: belhazzh5
+  description: Platform Engineer
+spec:
+  profile:
+    displayName: Belhazzh
+    email: belhazzh5@github.com
+  memberOf: []
