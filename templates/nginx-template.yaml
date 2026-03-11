@@ -12,7 +12,6 @@ spec:
   owner: user:default/belhazzh5
   type: service
 
-  # ── Input form shown to developer ──────────────
   parameters:
     - title: Application Details
       required:
@@ -35,14 +34,11 @@ spec:
           default: 2
           minimum: 1
           maximum: 5
-          description: How many pod replicas to deploy
         owner:
           title: Owner
           type: string
-          description: Team or user who owns this service
           default: user:default/belhazzh5
 
-  # ── Steps executed by Backstage scaffolder ──────
   steps:
     - id: fetch-template
       name: Fetch Template Files
@@ -54,30 +50,16 @@ spec:
           description: ${{ parameters.description }}
           replicas: ${{ parameters.replicas }}
           owner: ${{ parameters.owner }}
-          repoUrl: github.com/belhazzh5/${{ parameters.appName }}
 
     - id: create-repo
       name: Create GitHub Repository
       action: publish:github
       input:
-        allowedHosts: ['github.com']
         description: ${{ parameters.description }}
         repoUrl: github.com?owner=belhazzh5&repo=${{ parameters.appName }}
         defaultBranch: main
         repoVisibility: public
-
-    - id: create-argocd-app
-      name: Create ArgoCD Application
-      action: argocd:create-app
-      input:
-        appName: ${{ parameters.appName }}
-        argoInstance: main
-        projectName: default
-        repoUrl: https://github.com/belhazzh5/${{ parameters.appName }}
-        path: k8s
-        destNamespace: ${{ parameters.appName }}
-        destServer: https://kubernetes.default.svc
-        syncPolicy: automated
+        gitCommitMessage: "chore: initial scaffold via IDP"
 
     - id: register-catalog
       name: Register in Backstage Catalog
@@ -86,15 +68,11 @@ spec:
         repoContentsUrl: ${{ steps['create-repo'].output.repoContentsUrl }}
         catalogInfoPath: /catalog-info.yaml
 
-  # ── Links shown after creation ──────────────────
   output:
     links:
       - title: GitHub Repository
         url: ${{ steps['create-repo'].output.remoteUrl }}
         icon: github
-      - title: ArgoCD Application
-        url: http://localhost:30081/applications/${{ parameters.appName }}
-        icon: dashboard
-      - title: Open in Backstage Catalog
+      - title: Open in Catalog
         url: /catalog/default/component/${{ parameters.appName }}
         icon: catalog
