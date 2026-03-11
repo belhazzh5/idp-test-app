@@ -6,7 +6,7 @@ metadata:
   labels:
     app: idp-test-app
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: idp-test-app
