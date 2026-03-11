@@ -1,0 +1,3 @@
+# ArgoCD App-of-Apps folder
+# Templates push ArgoCD Application manifests here automatically
+# ArgoCD watches this folder and deploys any app found here
